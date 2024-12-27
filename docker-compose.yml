@@ -1,0 +1,14 @@
+services:
+  apartments:
+    build: ./apartments
+    ports:
+      - "5001:5000"
+    develop:
+      watch:
+        - action: sync
+          path: ./apartments
+          target: /home
+          ignore:
+            - apartments_db/
+    volumes:
+      - ./apartments/apartments_db:/home/apartments_db
