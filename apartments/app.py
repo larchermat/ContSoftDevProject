@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request
+import threading
 import db_interaction as dbi
+import rabbitMQ_interaction as rmq
 
 app = Flask(__name__)
 
@@ -18,16 +20,22 @@ def create():
     elif not floor:
         return jsonify({"error": "Floor is required!"}), 400
     else:
-        dbi.add_apartment(name=name, address=address, noiselevel=noiselevel, floor=floor)
+        id = dbi.add_apartment(name=name, address=address, noiselevel=noiselevel, floor=floor)
+        new_apart_thread = threading.Thread(target=rmq.publish_new_apartments, args=(id,))
+        new_apart_thread.daemon = True
+        new_apart_thread.start()
         return '', 200
 
 @app.route('/remove')
-def delete():
+def remove():
     id = request.args.get('id')
     if not id:
         return jsonify({"error": "Missing 'id' parameter"}), 400
     print(f"id:{id}")
     dbi.remove_apartment(id)
+    new_apart_thread = threading.Thread(target=rmq.publish_rem_apartments, args=(id,))
+    new_apart_thread.daemon = True
+    new_apart_thread.start()
     return '', 200
 
 @app.route('/list')

@@ -49,9 +49,10 @@ def add_apartment(name:str, address:str, noiselevel:int, floor:int):
     connection.execute("INSERT INTO apartments (id, name, address, noiselevel, floor) VALUES (?, ?, ?, ?, ?)", (id, name, address, noiselevel, floor))
     connection.commit()
     connection.close()
+    return id
 
 def remove_apartment(id:str):
     connection = get_db_connection()
-    connection.execute(f"DELETE FROM apartments WHERE id=?;",(f"{id}",))
+    connection.execute("DELETE FROM apartments WHERE id=?;",(id,))
     connection.commit()
     connection.close()

@@ -12,3 +12,27 @@ services:
             - apartments_db/
     volumes:
       - ./apartments/apartments_db:/home/apartments_db
+
+  booking:
+    build: ./booking
+    ports:
+      - "5002:5000"
+    develop:
+      watch:
+        - action: sync
+          path: ./booking
+          target: /home
+          ignore:
+            - booking_db/
+    volumes:
+      - ./booking/booking_db:/home/booking_db
+
+  rabbitmq:
+    image: rabbitmq:4.0-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
