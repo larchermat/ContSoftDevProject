@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 import threading
 import db_interaction as dbi
 import rabbitMQ_interaction as rmq
+import os
 
 app = Flask(__name__)
 
@@ -49,5 +50,6 @@ def index():
     return jsonify(message), 200
 
 if __name__ == '__main__':
-    dbi.initialize()
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        dbi.initialize()
     app.run(host='0.0.0.0', port=5000, debug=True)

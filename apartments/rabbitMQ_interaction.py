@@ -27,7 +27,7 @@ def wait_for_rabbitmq():
                 pika.ConnectionParameters(host='rabbitmq', credentials=rabbit_credentials)
             )
             print("Connected to RabbitMQ!")
-            return  connection
+            return connection
         except pika.exceptions.AMQPConnectionError as e:
             print(f"RabbitMQ not ready, retrying in {retry_interval} seconds... (Attempt {attempt + 1}/{max_retries})")
             time.sleep(retry_interval)

@@ -1,4 +1,5 @@
 import pika
+import pika.exceptions
 import db_interaction as dbi
 import time
 import json
@@ -30,7 +31,12 @@ def start_consumer():
 
     channel.basic_consume(queue=queue_name_rem, on_message_callback=remove_apartment, auto_ack=True)
     
-    channel.start_consuming()
+    try:
+        channel.start_consuming()
+    except pika.exceptions.ConnectionClosedByBroker as e:
+        print("Broker closed connection")
+    finally:
+        exit()
 
 def wait_for_rabbitmq():
     max_retries = 10
@@ -41,7 +47,7 @@ def wait_for_rabbitmq():
                 pika.ConnectionParameters(host='rabbitmq', credentials=rabbit_credentials)
             )
             print("Connected to RabbitMQ!")
-            return  connection
+            return connection
         except pika.exceptions.AMQPConnectionError as e:
             print(f"RabbitMQ not ready, retrying in {retry_interval} seconds... (Attempt {attempt + 1}/{max_retries})")
             time.sleep(retry_interval)
