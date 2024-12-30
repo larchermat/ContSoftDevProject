@@ -56,7 +56,7 @@ def create():
         args=(
             "events",
             "booking.new",
-            dbi.Booking(id, apartment, start, end, who).__dict__,
+            dbi.Booking(id, apartment, start, end, who).dict_for_mq(),
         ),
     )
     new_booking_thread.daemon = True
@@ -97,7 +97,7 @@ def change():
         args=(
             "events",
             "booking.change",
-            booking.__dict__,
+            booking.dict_for_mq(),
         ),
     )
     change_booking_thread.daemon = True
@@ -121,7 +121,8 @@ def index():
 
 if __name__ == "__main__":
     dbi.initialize()
-    consumer_thread = threading.Thread(target=rmq.start_consumer)
+    channel = rmq.set_up_consumer()
+    consumer_thread = threading.Thread(target=rmq.start_consumer, args=(channel,))
     consumer_thread.daemon = True
     consumer_thread.start()
     app.run(host="0.0.0.0", port=5000)

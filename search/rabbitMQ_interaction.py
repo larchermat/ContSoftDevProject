@@ -6,7 +6,7 @@ import json
 
 rabbit_credentials = pika.PlainCredentials(username="guest", password="guest")
 
-def start_consumer():
+def set_up_consumer():
     connection = wait_for_rabbitmq()
     channel = connection.channel()
     channel.exchange_declare(exchange="events", exchange_type="topic")
@@ -37,7 +37,7 @@ def start_consumer():
 
     def remove_apartment(ch, method, properties, body):
         entry = json.loads(body.decode())
-        dbi.remove_apartment(entry["apartment"])
+        dbi.remove_apartment(entry["id"])
 
     channel.basic_consume(
         queue=queue_name, on_message_callback=remove_apartment, auto_ack=True
@@ -83,12 +83,10 @@ def start_consumer():
         queue=queue_name, on_message_callback=change_booking, auto_ack=True
     )
 
-    try:
-        channel.start_consuming()
-    except pika.exceptions.ConnectionClosedByBroker as e:
-        print("Broker closed connection")
-    finally:
-        exit()
+    return channel
+
+def start_consumer(channel):
+    channel.start_consuming()
 
 def wait_for_rabbitmq():
     max_retries = 10

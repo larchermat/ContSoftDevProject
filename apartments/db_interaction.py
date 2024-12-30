@@ -46,6 +46,7 @@ def initialize():
 def get_all_apartments():
     connection = get_db_connection()
     entries = connection.execute("SELECT * FROM apartments").fetchall()
+    connection.close()
     return [convert_entry(entry) for entry in entries]
 
 

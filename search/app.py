@@ -3,6 +3,7 @@ import threading
 import db_interaction as dbi
 import rabbitMQ_interaction as rmq
 import datetime
+import json
 
 app = Flask(__name__)
 
@@ -72,7 +73,8 @@ def index():
 
 if __name__ == "__main__":
     dbi.initialize()
-    consumer_thread = threading.Thread(target=rmq.start_consumer)
+    channel = rmq.set_up_consumer()
+    consumer_thread = threading.Thread(target=rmq.start_consumer, args=(channel,))
     consumer_thread.daemon = True
     consumer_thread.start()
     app.run(host="0.0.0.0", port=5000)

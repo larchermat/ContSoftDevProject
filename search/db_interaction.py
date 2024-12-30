@@ -69,6 +69,7 @@ def get_all_available(start: datetime.datetime, end: datetime.datetime):
     bookings = [convert_entry_booking(entry) for entry in entries]
     entries = connection.execute("SELECT * FROM apartments").fetchall()
     apartments = [convert_entry_apartment(entry) for entry in entries]
+    connection.close()
     available = []
     for apartment in apartments:
         isAvailable = True
@@ -88,7 +89,7 @@ def add_apartment(id: str, name: str, address: str, noiselevel: int, floor: int)
     connection = get_db_connection()
     connection.execute(
         "INSERT INTO apartments (id, name, address, noiselevel, floor) VALUES (?, ?, ?, ?, ?)",
-        (id, name, address, noiselevel, floor),
+        (id, name, address, noiselevel, floor)
     )
     connection.commit()
     connection.close()
@@ -105,7 +106,7 @@ def add_booking(id: str, apartment: str, start: str, end: str):
     connection = get_db_connection()
     connection.execute(
         "INSERT INTO bookings (id, apartment, 'from', 'to') VALUES (?, ?, ?, ?)",
-        (id, apartment, start, end),
+        (id, apartment, start, end)
     )
     connection.commit()
     connection.close()
@@ -130,9 +131,11 @@ def change_booking(id: str, start: str, end: str):
 def get_all_apartments():
     connection = get_db_connection()
     entries = connection.execute("SELECT * FROM apartments").fetchall()
+    connection.close()
     return [convert_entry_apartment(entry) for entry in entries]
 
 def get_all_bookings():
     connection = get_db_connection()
     entries = connection.execute("SELECT * FROM bookings").fetchall()
+    connection.close()
     return [convert_entry_booking(entry) for entry in entries]

@@ -1,14 +1,23 @@
 import sqlite3
 import uuid
-
+import datetime
 
 class Booking:
     def __init__(self, id, apartment, start, end, who):
         self.id = id
         self.apartment = apartment
-        self.start = start
-        self.end = end
+        self.start = datetime.datetime.strptime(start, "%Y%m%d")
+        self.end = datetime.datetime.strptime(end, "%Y%m%d")
         self.who = who
+
+    def dict_for_mq(self):
+        return {
+            "id":self.id,
+            "apartment":self.apartment,
+            "start":self.start.strftime("%Y%m%d"),
+            "end":self.end.strftime("%Y%m%d"),
+            "who":self.who
+        }
 
 
 def convert_entry(entry):
@@ -46,12 +55,14 @@ def initialize():
 def get_all_bookings():
     connection = get_db_connection()
     entries = connection.execute("SELECT * FROM bookings").fetchall()
+    connection.close()
     return [convert_entry(entry) for entry in entries]
 
 
 def get_all_apartments():
     connection = get_db_connection()
     entries = connection.execute("SELECT * FROM apartments").fetchall()
+    connection.close()
     return [entry["id"] for entry in entries]
 
 
@@ -64,15 +75,17 @@ def add_apartment(id: str):
 
 def remove_apartment(id: str):
     connection = get_db_connection()
-    connection.execute("DELETE FROM bookings WHERE apartment=?;", (id,))
-    connection.execute("DELETE FROM apartments WHERE id=?;", (id,))
-    connection.commit()
+    with connection:
+        connection.execute("DELETE FROM bookings WHERE apartment=?;", (id,))
+        connection.execute("DELETE FROM apartments WHERE id=?;", (id,))
     connection.close()
 
 
 def get_bookings_per_apartment(id: str):
     connection = get_db_connection()
-    return connection.execute("SELECT id FROM bookings WHERE apartment=?", (id,))
+    bookings = connection.execute("SELECT id FROM bookings WHERE apartment=?", (id,)).fetchall()
+    connection.close()
+    return bookings
 
 
 def add_booking(apartment: str, start: str, end: str, who: str):

@@ -43,7 +43,7 @@ def remove():
         return e.args[0], 400
     dbi.remove_apartment(id)
     new_apart_thread = threading.Thread(
-        target=rmq.publish_event, args=("events", "apartment.new", {"id": id})
+        target=rmq.publish_event, args=("events", "apartment.remove", {"id": id})
     )
     new_apart_thread.daemon = True
     new_apart_thread.start()
