@@ -5,7 +5,7 @@ services:
       - "5001:5000"
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: ./apartments
           target: /home
           ignore:
@@ -19,13 +19,27 @@ services:
       - "5002:5000"
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: ./booking
           target: /home
           ignore:
             - booking_db/
     volumes:
       - ./booking/booking_db:/home/booking_db
+
+  search:
+    build: ./search
+    ports:
+      - "5003:5000"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./search
+          target: /home
+          ignore:
+            - search_db/
+    volumes:
+      - ./search/search_db:/home/search_db
 
   rabbitmq:
     image: rabbitmq:4.0-management

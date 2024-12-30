@@ -1,13 +1,15 @@
 import sqlite3
 import uuid
 
+
 class Apartment:
-    def __init__(self, id, name, address, noiselevel, floor):
-        self.id=id
-        self.name=name
+    def __init__(self, id: str, name: str, address: str, noiselevel: int, floor: int):
+        self.id = id
+        self.name = name
         self.address = address
         self.noiselevel = noiselevel
         self.floor = floor
+
 
 def convert_entry(entry):
     return Apartment(
@@ -15,13 +17,15 @@ def convert_entry(entry):
         entry["name"],
         entry["address"],
         entry["noiselevel"],
-        entry["floor"]
-        )
+        entry["floor"],
+    )
+
 
 def get_db_connection():
-    conn = sqlite3.connect('apartments_db/data.db')
+    conn = sqlite3.connect("apartments_db/data.db")
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def initialize():
     connection = get_db_connection()
@@ -38,21 +42,27 @@ def initialize():
     connection.commit()
     connection.close()
 
+
 def get_all_apartments():
     connection = get_db_connection()
-    entries = connection.execute('SELECT * FROM apartments').fetchall()
+    entries = connection.execute("SELECT * FROM apartments").fetchall()
     return [convert_entry(entry) for entry in entries]
 
-def add_apartment(name:str, address:str, noiselevel:int, floor:int):
+
+def add_apartment(name: str, address: str, noiselevel: int, floor: int):
     connection = get_db_connection()
     id = uuid.uuid4().hex
-    connection.execute("INSERT INTO apartments (id, name, address, noiselevel, floor) VALUES (?, ?, ?, ?, ?)", (id, name, address, noiselevel, floor))
+    connection.execute(
+        "INSERT INTO apartments (id, name, address, noiselevel, floor) VALUES (?, ?, ?, ?, ?)",
+        (id, name, address, noiselevel, floor),
+    )
     connection.commit()
     connection.close()
     return id
 
-def remove_apartment(id:str):
+
+def remove_apartment(id: str):
     connection = get_db_connection()
-    connection.execute("DELETE FROM apartments WHERE id=?;",(id,))
+    connection.execute("DELETE FROM apartments WHERE id=?;", (id,))
     connection.commit()
     connection.close()

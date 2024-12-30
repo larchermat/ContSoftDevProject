@@ -1,25 +1,23 @@
 import sqlite3
 import uuid
 
-class Apartment:
+
+class Booking:
     def __init__(self, id, apartment, start, end, who):
-        self.id=id
-        self.apartment=apartment
+        self.id = id
+        self.apartment = apartment
         self.start = start
         self.end = end
         self.who = who
 
+
 def convert_entry(entry):
-    return Apartment(
-        entry["id"],
-        entry["apartment"],
-        entry["from"],
-        entry["to"],
-        entry["who"]
-        )
+    return Booking(
+        entry["id"], entry["apartment"], entry["from"], entry["to"], entry["who"]
+    )
 
 def get_db_connection():
-    conn = sqlite3.connect('booking_db/data.db')
+    conn = sqlite3.connect("booking_db/data.db")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -44,38 +42,65 @@ def initialize():
     connection.commit()
     connection.close()
 
+
 def get_all_bookings():
     connection = get_db_connection()
-    entries = connection.execute('SELECT * FROM bookings').fetchall()
+    entries = connection.execute("SELECT * FROM bookings").fetchall()
     return [convert_entry(entry) for entry in entries]
+
 
 def get_all_apartments():
     connection = get_db_connection()
-    entries = connection.execute('SELECT * FROM apartments').fetchall()
-    return [entry['id'] for entry in entries]
+    entries = connection.execute("SELECT * FROM apartments").fetchall()
+    return [entry["id"] for entry in entries]
 
-def add_apartment(id:str):
+
+def add_apartment(id: str):
     connection = get_db_connection()
     connection.execute("INSERT INTO apartments (id) VALUES (?)", (id,))
     connection.commit()
     connection.close()
 
-def remove_apartment(id:str):
+
+def remove_apartment(id: str):
     connection = get_db_connection()
-    connection.execute("DELETE FROM bookings WHERE apartment=?;",(id,))
-    connection.execute("DELETE FROM apartments WHERE id=?;",(id,))
+    connection.execute("DELETE FROM bookings WHERE apartment=?;", (id,))
+    connection.execute("DELETE FROM apartments WHERE id=?;", (id,))
     connection.commit()
     connection.close()
 
-def add_booking(apartment:str, start:str, end:str, who:str):
+
+def get_bookings_per_apartment(id: str):
+    connection = get_db_connection()
+    return connection.execute("SELECT id FROM bookings WHERE apartment=?", (id,))
+
+
+def add_booking(apartment: str, start: str, end: str, who: str):
     connection = get_db_connection()
     id = uuid.uuid4().hex
-    connection.execute("INSERT INTO bookings (id, apartment, 'from', 'to', who) VALUES (?, ?, ?, ?, ?)", (id, apartment, start, end, who))
+    connection.execute(
+        "INSERT INTO bookings (id, apartment, 'from', 'to', who) VALUES (?, ?, ?, ?, ?)",
+        (id, apartment, start, end, who),
+    )
     connection.commit()
     connection.close()
+    return id
 
-def remove_booking(id:str):
+def change_booking(id: str, start: str, end: str):
     connection = get_db_connection()
-    connection.execute("DELETE FROM bookings WHERE id=?;",(id,))
+    booking = convert_entry(connection.execute("SELECT * FROM bookings WHERE id=?", (id, )).fetchone())
+    connection.execute("""
+        UPDATE bookings
+        SET 'from'=?, 'to'=?
+        WHERE id=?
+    """, (start,end,id))
+    connection.commit()
+    connection.close()
+    return booking
+
+
+def cancel_booking(id: str):
+    connection = get_db_connection()
+    connection.execute("DELETE FROM bookings WHERE id=?;", (id,))
     connection.commit()
     connection.close()
