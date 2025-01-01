@@ -41,6 +41,16 @@ services:
     volumes:
       - ./search/search_db:/home/search_db
 
+  gateway:
+    build: ./gateway
+    ports:
+      - "5004:5000"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./gateway
+          target: /home
+
   rabbitmq:
     image: rabbitmq:4.0-management
     container_name: rabbitmq
