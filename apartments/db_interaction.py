@@ -1,6 +1,8 @@
 import sqlite3
 import uuid
+import threading
 
+db_lock = threading.Lock()
 
 class Apartment:
     def __init__(self, id: str, name: str, address: str, noiselevel: int, floor: int):
@@ -44,26 +46,29 @@ def initialize():
 
 
 def get_all_apartments():
-    connection = get_db_connection()
-    entries = connection.execute("SELECT * FROM apartments").fetchall()
-    connection.close()
+    with db_lock:
+        connection = get_db_connection()
+        entries = connection.execute("SELECT * FROM apartments").fetchall()
+        connection.close()
     return [convert_entry(entry) for entry in entries]
 
 
 def add_apartment(name: str, address: str, noiselevel: int, floor: int):
-    connection = get_db_connection()
-    id = uuid.uuid4().hex
-    connection.execute(
-        "INSERT INTO apartments (id, name, address, noiselevel, floor) VALUES (?, ?, ?, ?, ?)",
-        (id, name, address, noiselevel, floor),
-    )
-    connection.commit()
-    connection.close()
+    with db_lock:
+        connection = get_db_connection()
+        id = uuid.uuid4().hex
+        connection.execute(
+            "INSERT INTO apartments (id, name, address, noiselevel, floor) VALUES (?, ?, ?, ?, ?)",
+            (id, name, address, noiselevel, floor),
+        )
+        connection.commit()
+        connection.close()
     return id
 
 
 def remove_apartment(id: str):
-    connection = get_db_connection()
-    connection.execute("DELETE FROM apartments WHERE id=?;", (id,))
-    connection.commit()
-    connection.close()
+    with db_lock:
+        connection = get_db_connection()
+        connection.execute("DELETE FROM apartments WHERE id=?;", (id,))
+        connection.commit()
+        connection.close()

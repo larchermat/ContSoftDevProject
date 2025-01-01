@@ -3,8 +3,25 @@ import threading
 import db_interaction as dbi
 import rabbitMQ_interaction as rmq
 import datetime
+import time
+import requests
 
 app = Flask(__name__)
+
+def wait_for_apartments():
+    max_retries = 10
+    retry_interval = 5
+    for attempt in range(max_retries):
+        try:
+            res = requests.get("http://apartments:5000/list")
+            return res.json()
+        except requests.exceptions.ConnectionError as e:
+            print(
+                f"Apartments not ready, retrying in {retry_interval} seconds... (Attempt {attempt + 1}/{max_retries})"
+            )
+            time.sleep(retry_interval)
+    print("Apartments service is still unavailable after max retries. Exiting.")
+    raise Exception("Could not retrieve data from Apartments after multiple retries.")
 
 def check_args(args:list, request):
     ret = []
@@ -38,7 +55,7 @@ def check_dates(start: str, end: str):
 
 
 @app.route("/add")
-def create():
+def add():
     try:
         apartment, start, end, who = check_args(["apartment", "from", "to", "who"], request)
     except Exception as e:
@@ -120,7 +137,8 @@ def index():
     return jsonify(message), 200
 
 if __name__ == "__main__":
-    dbi.initialize()
+    apartments = wait_for_apartments()
+    dbi.initialize(apartments)
     channel = rmq.set_up_consumer()
     consumer_thread = threading.Thread(target=rmq.start_consumer, args=(channel,))
     consumer_thread.daemon = True

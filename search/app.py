@@ -3,9 +3,41 @@ import threading
 import db_interaction as dbi
 import rabbitMQ_interaction as rmq
 import datetime
-import json
+import requests
+import time
 
 app = Flask(__name__)
+
+def wait_for_apartments():
+    max_retries = 10
+    retry_interval = 5
+    for attempt in range(max_retries):
+        try:
+            res = requests.get("http://apartments:5000/list")
+            return res.json()
+        except requests.exceptions.ConnectionError as e:
+            print(
+                f"Apartments not ready, retrying in {retry_interval} seconds... (Attempt {attempt + 1}/{max_retries})"
+            )
+            time.sleep(retry_interval)
+    print("Apartments service is still unavailable after max retries. Exiting.")
+    raise Exception("Could not retrieve data from Apartments after multiple retries.")
+
+def wait_for_bookings():
+    max_retries = 10
+    retry_interval = 5
+    for attempt in range(max_retries):
+        try:
+            res = requests.get("http://booking:5000/list")
+            return res.json()
+        except requests.exceptions.ConnectionError as e:
+            print(
+                f"Booking not ready, retrying in {retry_interval} seconds... (Attempt {attempt + 1}/{max_retries})"
+            )
+            time.sleep(retry_interval)
+    print("Booking service is still unavailable after max retries. Exiting.")
+    raise Exception("Could not retrieve data from Booking after multiple retries.")
+
 
 def check_args(args:list, request):
     ret = []
@@ -72,7 +104,9 @@ def index():
 
 
 if __name__ == "__main__":
-    dbi.initialize()
+    apartments = wait_for_apartments()
+    bookings = wait_for_bookings()
+    dbi.initialize(apartments, bookings)
     channel = rmq.set_up_consumer()
     consumer_thread = threading.Thread(target=rmq.start_consumer, args=(channel,))
     consumer_thread.daemon = True
