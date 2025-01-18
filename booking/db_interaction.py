@@ -5,6 +5,10 @@ import threading
 
 db_lock = threading.Lock()
 
+class BookingUnavailableException(Exception):
+    def __init__(self, *args):
+        super().__init__(*args)
+
 class Booking:
     def __init__(self, id, apartment, start, end, who):
         self.id = id
@@ -100,12 +104,32 @@ def remove_apartment(id: str):
 def get_bookings_per_apartment(id: str):
     with db_lock:
         connection = get_db_connection()
-        bookings = connection.execute("SELECT id FROM bookings WHERE apartment=?", (id,)).fetchall()
+        bookings = connection.execute("SELECT * FROM bookings WHERE apartment=?", (id,)).fetchall()
         connection.close()
     return bookings
 
+def check_booking(start_str: str, end_str: str, apartment: str = None, booking: str = None):
+    start = datetime.datetime.strptime(start_str, "%Y%m%d")
+    end = datetime.datetime.strptime(end_str, "%Y%m%d")
+    if apartment == None:
+        with db_lock:
+            connection = get_db_connection()
+            b = convert_entry(connection.execute("SELECT * FROM bookings WHERE id=?", (booking, )).fetchone())
+            connection.close()
+            apartment = b.apartment
+    bookings = get_bookings_per_apartment(apartment)
+    bookings = [convert_entry(b) for b in bookings]
+    isValid = True
+    for b in bookings:
+        if ((b.end > start and b.start <= end) or
+        (b.start < end and b.end >= start)):
+            isValid = False
+            break
+    if not isValid:
+        raise BookingUnavailableException("Booking dates are not available")
 
 def add_booking(apartment: str, start: str, end: str, who: str):
+    check_booking(start_str=start, end_str=end, apartment=apartment)
     with db_lock:
         connection = get_db_connection()
         id = uuid.uuid4().hex
@@ -118,6 +142,7 @@ def add_booking(apartment: str, start: str, end: str, who: str):
     return id
 
 def change_booking(id: str, start: str, end: str):
+    check_booking(start_str=start, end_str=end, booking=id)
     with db_lock:
         connection = get_db_connection()
         booking = convert_entry(connection.execute("SELECT * FROM bookings WHERE id=?", (id, )).fetchone())

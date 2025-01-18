@@ -67,7 +67,10 @@ def add():
             e.args[1],
             406,
         )
-    id = dbi.add_booking(apartment=apartment, start=start, end=end, who=who)
+    try:
+        id = dbi.add_booking(apartment=apartment, start=start, end=end, who=who)
+    except dbi.BookingUnavailableException as e:
+        return jsonify({"error":f"{str(e)}"}), 400
     new_booking_thread = threading.Thread(
         target=rmq.publish_event,
         args=(
@@ -108,7 +111,10 @@ def change():
             e.args[1],
             406,
         )
-    booking = dbi.change_booking(id, start, end)
+    try:
+        booking = dbi.change_booking(id, start, end)
+    except dbi.BookingUnavailableException as e:
+        return jsonify({"error":f"{str(e)}"}), 400
     change_booking_thread = threading.Thread(
         target=rmq.publish_event,
         args=(
