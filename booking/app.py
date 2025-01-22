@@ -114,7 +114,7 @@ def change():
     try:
         booking = dbi.change_booking(id, start, end)
     except dbi.BookingUnavailableException as e:
-        return jsonify({"error":f"{str(e)}"}), 400
+        return jsonify({"error":f"{e.args[0]}", "requested":e.args[1], "obj":e.args[2]}), 400
     change_booking_thread = threading.Thread(
         target=rmq.publish_event,
         args=(

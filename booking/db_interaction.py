@@ -108,28 +108,31 @@ def get_bookings_per_apartment(id: str):
         connection.close()
     return bookings
 
-def check_booking(start_str: str, end_str: str, apartment: str = None, booking: str = None):
+def check_booking(start_str: str, end_str: str, who: str = None, apartment: str = None, id: str = None):
     start = datetime.datetime.strptime(start_str, "%Y%m%d")
     end = datetime.datetime.strptime(end_str, "%Y%m%d")
-    if apartment == None:
+    booking = None
+    if apartment == None or who == None:
         with db_lock:
             connection = get_db_connection()
-            b = convert_entry(connection.execute("SELECT * FROM bookings WHERE id=?", (booking, )).fetchone())
+            booking = convert_entry(connection.execute("SELECT * FROM bookings WHERE id=?", (id, )).fetchone())
             connection.close()
-            apartment = b.apartment
+            apartment = booking.apartment
+            who = booking.who
     bookings = get_bookings_per_apartment(apartment)
-    bookings = [convert_entry(b) for b in bookings]
+    bookings = [convert_entry(entry) for entry in bookings]
     isValid = True
     for b in bookings:
-        if ((b.end > start and b.start <= end) or
-        (b.start < end and b.end >= start)):
+        if (((b.end > start and b.start <= end) or
+        (b.start < end and b.end >= start)) and (who != b.who)):
+            booking = b
             isValid = False
             break
     if not isValid:
-        raise BookingUnavailableException("Booking dates are not available")
+        raise BookingUnavailableException("Booking dates are not available", {"start":f"{start}","end":f"{end}", "who":f"{who}", "apartment":f"{apartment}"}, booking.__dict__)
 
 def add_booking(apartment: str, start: str, end: str, who: str):
-    check_booking(start_str=start, end_str=end, apartment=apartment)
+    check_booking(start_str=start, end_str=end, who=who, apartment=apartment)
     with db_lock:
         connection = get_db_connection()
         id = uuid.uuid4().hex
@@ -142,7 +145,7 @@ def add_booking(apartment: str, start: str, end: str, who: str):
     return id
 
 def change_booking(id: str, start: str, end: str):
-    check_booking(start_str=start, end_str=end, booking=id)
+    check_booking(start_str=start, end_str=end, id=id)
     with db_lock:
         connection = get_db_connection()
         booking = convert_entry(connection.execute("SELECT * FROM bookings WHERE id=?", (id, )).fetchone())
