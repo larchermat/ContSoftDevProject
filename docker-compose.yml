@@ -1,8 +1,6 @@
 services:
   apartments:
     build: ./apartments
-    ports:
-      - "5001:5000"
     develop:
       watch:
         - action: sync+restart
@@ -15,8 +13,6 @@ services:
 
   booking:
     build: ./booking
-    ports:
-      - "5002:5000"
     develop:
       watch:
         - action: sync+restart
@@ -29,8 +25,6 @@ services:
 
   search:
     build: ./search
-    ports:
-      - "5003:5000"
     develop:
       watch:
         - action: sync+restart

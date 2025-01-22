@@ -4,14 +4,19 @@ import json
 
 rabbit_credentials = pika.PlainCredentials(username="guest", password="guest")
 
+
 def publish_event(exchange: str, routing_key: str, event: dict):
     connection = wait_for_rabbitmq()
     channel = connection.channel()
     channel.exchange_declare(exchange=exchange, exchange_type="topic")
     channel.basic_publish(
-        exchange=exchange, routing_key=routing_key, body=json.dumps(event)
+        exchange=exchange,
+        routing_key=routing_key,
+        body=json.dumps(event),
+        properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent)
     )
     connection.close()
+
 
 def wait_for_rabbitmq():
     max_retries = 10

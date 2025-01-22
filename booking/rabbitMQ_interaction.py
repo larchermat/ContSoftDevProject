@@ -7,12 +7,13 @@ import json
 
 rabbit_credentials = pika.PlainCredentials(username="guest", password="guest")
 
+
 def set_up_consumer():
     connection = wait_for_rabbitmq()
     channel = connection.channel()
     channel.exchange_declare(exchange="events", exchange_type="topic")
 
-    result = channel.queue_declare(queue="", exclusive=True)
+    result = channel.queue_declare(queue="booking_apartment_add", durable=True)
     queue_name_new = result.method.queue
     channel.queue_bind(
         exchange="events", queue=queue_name_new, routing_key="apartment.new"
@@ -26,7 +27,7 @@ def set_up_consumer():
         queue=queue_name_new, on_message_callback=new_apartment, auto_ack=True
     )
 
-    result = channel.queue_declare(queue="", exclusive=True)
+    result = channel.queue_declare(queue="booking_apartment_remove", durable=True)
     queue_name_rem = result.method.queue
     channel.queue_bind(
         exchange="events", queue=queue_name_rem, routing_key="apartment.remove"
@@ -44,6 +45,7 @@ def set_up_consumer():
     )
 
     return channel
+
 
 def start_consumer(channel):
     channel.start_consuming()
@@ -75,6 +77,9 @@ def publish_event(exchange: str, routing_key: str, event: dict):
     channel = connection.channel()
     channel.exchange_declare(exchange=exchange, exchange_type="topic")
     channel.basic_publish(
-        exchange=exchange, routing_key=routing_key, body=json.dumps(event)
+        exchange=exchange,
+        routing_key=routing_key,
+        body=json.dumps(event),
+        properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent)
     )
     connection.close()

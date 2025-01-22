@@ -11,7 +11,7 @@ def set_up_consumer():
     channel = connection.channel()
     channel.exchange_declare(exchange="events", exchange_type="topic")
 
-    result = channel.queue_declare(queue="", exclusive=True)
+    result = channel.queue_declare(queue="search_apartment_add", durable=True)
     queue_name = result.method.queue
     channel.queue_bind(exchange="events", queue=queue_name, routing_key="apartment.new")
 
@@ -29,7 +29,7 @@ def set_up_consumer():
         queue=queue_name, on_message_callback=new_apartment, auto_ack=True
     )
 
-    result = channel.queue_declare(queue="", exclusive=True)
+    result = channel.queue_declare(queue="search_apartment_remove", durable=True)
     queue_name = result.method.queue
     channel.queue_bind(
         exchange="events", queue=queue_name, routing_key="apartment.remove"
@@ -43,7 +43,7 @@ def set_up_consumer():
         queue=queue_name, on_message_callback=remove_apartment, auto_ack=True
     )
 
-    result = channel.queue_declare(queue="", exclusive=True)
+    result = channel.queue_declare(queue="search_booking_add", durable=True)
     queue_name = result.method.queue
     channel.queue_bind(exchange="events", queue=queue_name, routing_key="booking.new")
 
@@ -55,7 +55,7 @@ def set_up_consumer():
         queue=queue_name, on_message_callback=new_booking, auto_ack=True
     )
 
-    result = channel.queue_declare(queue="", exclusive=True)
+    result = channel.queue_declare(queue="search_booking_remove", durable=True)
     queue_name = result.method.queue
     channel.queue_bind(
         exchange="events", queue=queue_name, routing_key="booking.remove"
@@ -69,7 +69,7 @@ def set_up_consumer():
         queue=queue_name, on_message_callback=remove_booking, auto_ack=True
     )
 
-    result = channel.queue_declare(queue="", exclusive=True)
+    result = channel.queue_declare(queue="search_booking_change", durable=True)
     queue_name = result.method.queue
     channel.queue_bind(
         exchange="events", queue=queue_name, routing_key="booking.change"
