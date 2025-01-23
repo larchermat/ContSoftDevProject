@@ -5,7 +5,8 @@ import rabbitMQ_interaction as rmq
 
 app = Flask(__name__)
 
-def check_args(args:list, request):
+
+def check_args(args: list, request):
     ret = []
     for arg in args:
         val = request.args.get(arg)
@@ -14,10 +15,13 @@ def check_args(args:list, request):
         ret.append(val)
     return ret
 
+
 @app.route("/add")
 def create():
     try:
-        name, address, noiselevel, floor = check_args(["name", "address", "noiselevel", "floor"], request)
+        name, address, noiselevel, floor = check_args(
+            ["name", "address", "noiselevel", "floor"], request
+        )
     except Exception as e:
         return e.args[0], 400
     id = dbi.add_apartment(
@@ -35,10 +39,11 @@ def create():
     new_apart_thread.start()
     return "", 200
 
+
 @app.route("/remove")
 def remove():
     try:
-        id, = check_args(["id"],request)
+        (id,) = check_args(["id"], request)
     except Exception as e:
         return e.args[0], 400
     dbi.remove_apartment(id)

@@ -5,9 +5,11 @@ import threading
 
 db_lock = threading.Lock()
 
+
 class BookingUnavailableException(Exception):
     def __init__(self, *args):
         super().__init__(*args)
+
 
 class Booking:
     def __init__(self, id, apartment, start, end, who):
@@ -19,11 +21,11 @@ class Booking:
 
     def dict_for_mq(self):
         return {
-            "id":self.id,
-            "apartment":self.apartment,
-            "start":self.start.strftime("%Y%m%d"),
-            "end":self.end.strftime("%Y%m%d"),
-            "who":self.who
+            "id": self.id,
+            "apartment": self.apartment,
+            "start": self.start.strftime("%Y%m%d"),
+            "end": self.end.strftime("%Y%m%d"),
+            "who": self.who,
         }
 
     def set_start(self, start):
@@ -38,10 +40,12 @@ def convert_entry(entry):
         entry["id"], entry["apartment"], entry["from"], entry["to"], entry["who"]
     )
 
+
 def get_db_connection():
     conn = sqlite3.connect("booking_db/data.db")
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def initialize(apartments):
     connection = get_db_connection()
@@ -63,7 +67,9 @@ def initialize(apartments):
         )
         if len(apartments) > 0:
             for item in apartments:
-                connection.execute("INSERT OR REPLACE INTO apartments (id) VALUES (?)", (item["id"],))
+                connection.execute(
+                    "INSERT OR REPLACE INTO apartments (id) VALUES (?)", (item["id"],)
+                )
     connection.commit()
     connection.close()
 
@@ -74,14 +80,6 @@ def get_all_bookings():
         entries = connection.execute("SELECT * FROM bookings").fetchall()
         connection.close()
     return [convert_entry(entry) for entry in entries]
-
-
-def get_all_apartments():
-    with db_lock:
-        connection = get_db_connection()
-        entries = connection.execute("SELECT * FROM apartments").fetchall()
-        connection.close()
-    return [entry["id"] for entry in entries]
 
 
 def add_apartment(id: str):
@@ -104,18 +102,27 @@ def remove_apartment(id: str):
 def get_bookings_per_apartment(id: str):
     with db_lock:
         connection = get_db_connection()
-        bookings = connection.execute("SELECT * FROM bookings WHERE apartment=?", (id,)).fetchall()
+        bookings = connection.execute(
+            "SELECT * FROM bookings WHERE apartment=?", (id,)
+        ).fetchall()
         connection.close()
     return bookings
 
-def check_booking(start_str: str, end_str: str, who: str = None, apartment: str = None, id: str = None):
+
+def check_booking(
+    start_str: str, end_str: str, who: str = None, apartment: str = None, id: str = None
+):
     start = datetime.datetime.strptime(start_str, "%Y%m%d")
     end = datetime.datetime.strptime(end_str, "%Y%m%d")
     booking = None
     if apartment == None or who == None:
         with db_lock:
             connection = get_db_connection()
-            booking = convert_entry(connection.execute("SELECT * FROM bookings WHERE id=?", (id, )).fetchone())
+            booking = convert_entry(
+                connection.execute(
+                    "SELECT * FROM bookings WHERE id=?", (id,)
+                ).fetchone()
+            )
             connection.close()
             apartment = booking.apartment
             who = booking.who
@@ -123,13 +130,24 @@ def check_booking(start_str: str, end_str: str, who: str = None, apartment: str 
     bookings = [convert_entry(entry) for entry in bookings]
     isValid = True
     for b in bookings:
-        if (((b.end > start and b.start <= end) or
-        (b.start < end and b.end >= start)) and (who != b.who)):
+        if (
+            (b.end > start and b.start <= end) or (b.start < end and b.end >= start)
+        ) and (who != b.who):
             booking = b
             isValid = False
             break
     if not isValid:
-        raise BookingUnavailableException("Booking dates are not available", {"start":f"{start}","end":f"{end}", "who":f"{who}", "apartment":f"{apartment}"}, booking.__dict__)
+        raise BookingUnavailableException(
+            "Booking dates are not available",
+            {
+                "start": f"{start}",
+                "end": f"{end}",
+                "who": f"{who}",
+                "apartment": f"{apartment}",
+            },
+            booking.__dict__,
+        )
+
 
 def add_booking(apartment: str, start: str, end: str, who: str):
     check_booking(start_str=start, end_str=end, who=who, apartment=apartment)
@@ -144,16 +162,22 @@ def add_booking(apartment: str, start: str, end: str, who: str):
         connection.close()
     return id
 
+
 def change_booking(id: str, start: str, end: str):
     check_booking(start_str=start, end_str=end, id=id)
     with db_lock:
         connection = get_db_connection()
-        booking = convert_entry(connection.execute("SELECT * FROM bookings WHERE id=?", (id, )).fetchone())
-        connection.execute("""
+        booking = convert_entry(
+            connection.execute("SELECT * FROM bookings WHERE id=?", (id,)).fetchone()
+        )
+        connection.execute(
+            """
             UPDATE bookings
             SET 'from'=?, 'to'=?
             WHERE id=?
-        """, (start,end,id))
+        """,
+            (start, end, id),
+        )
         connection.commit()
         connection.close()
     booking.set_start(start)

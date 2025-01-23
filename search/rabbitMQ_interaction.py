@@ -6,6 +6,7 @@ import json
 
 rabbit_credentials = pika.PlainCredentials(username="guest", password="guest")
 
+
 def set_up_consumer():
     connection = wait_for_rabbitmq()
     channel = connection.channel()
@@ -85,8 +86,10 @@ def set_up_consumer():
 
     return channel
 
+
 def start_consumer(channel):
     channel.start_consuming()
+
 
 def wait_for_rabbitmq():
     max_retries = 10

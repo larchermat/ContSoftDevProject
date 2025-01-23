@@ -4,6 +4,7 @@ import threading
 
 db_lock = threading.Lock()
 
+
 class Apartment:
     def __init__(self, id: str, name: str, address: str, noiselevel: int, floor: int):
         self.id = id

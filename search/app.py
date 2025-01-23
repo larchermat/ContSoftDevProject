@@ -8,6 +8,7 @@ import time
 
 app = Flask(__name__)
 
+
 def wait_for_apartments():
     max_retries = 10
     retry_interval = 5
@@ -22,6 +23,7 @@ def wait_for_apartments():
             time.sleep(retry_interval)
     print("Apartments service is still unavailable after max retries. Exiting.")
     raise Exception("Could not retrieve data from Apartments after multiple retries.")
+
 
 def wait_for_bookings():
     max_retries = 10
@@ -39,7 +41,7 @@ def wait_for_bookings():
     raise Exception("Could not retrieve data from Booking after multiple retries.")
 
 
-def check_args(args:list, request):
+def check_args(args: list, request):
     ret = []
     for arg in args:
         val = request.args.get(arg)
@@ -48,37 +50,33 @@ def check_args(args:list, request):
         ret.append(val)
     return ret
 
+
 def check_dates(start: str, end: str):
     try:
         start_date = datetime.datetime.strptime(start, "%Y%m%d")
     except Exception as e:
-        raise Exception(str(e), jsonify({"error": "Start date is incorrectly set", "start": start}))
+        raise Exception(
+            str(e), jsonify({"error": "Start date is incorrectly set", "start": start})
+        )
     try:
         end_date = datetime.datetime.strptime(end, "%Y%m%d")
     except Exception as e:
-        raise Exception(str(e), jsonify({"error": "End date is incorrectly set", "end": end}))
+        raise Exception(
+            str(e), jsonify({"error": "End date is incorrectly set", "end": end})
+        )
     if end_date <= start_date:
-            raise Exception(
-                "End date is equal to or before start date",
-                jsonify(
-                    {
-                        "error": "End date is equal to or before start date",
-                        "start": start_date.strftime("%d/%m/%Y"),
-                        "end": end_date.strftime("%d/%m/%Y"),
-                    }
-                )
-            )
+        raise Exception(
+            "End date is equal to or before start date",
+            jsonify(
+                {
+                    "error": "End date is equal to or before start date",
+                    "start": start_date.strftime("%d/%m/%Y"),
+                    "end": end_date.strftime("%d/%m/%Y"),
+                }
+            ),
+        )
     return start_date, end_date
 
-@app.route("/list_apartments")
-def list_apartments():
-    entries = dbi.get_all_apartments()
-    return jsonify([entry.__dict__ for entry in entries])
-
-@app.route("/list_bookings")
-def list_bookings():
-    entries = dbi.get_all_bookings()
-    return jsonify([entry.__dict__ for entry in entries])
 
 @app.route("/search")
 def search():
@@ -89,10 +87,7 @@ def search():
     try:
         start_date, end_date = check_dates(start, end)
     except Exception as e:
-        return (
-            e.args[1],
-            406
-        )
+        return (e.args[1], 406)
     entries = dbi.get_all_available(start=start_date, end=end_date)
     return jsonify([entry.__dict__ for entry in entries]), 200
 

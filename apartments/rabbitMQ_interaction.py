@@ -13,7 +13,7 @@ def publish_event(exchange: str, routing_key: str, event: dict):
         exchange=exchange,
         routing_key=routing_key,
         body=json.dumps(event),
-        properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent)
+        properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent),
     )
     connection.close()
 
